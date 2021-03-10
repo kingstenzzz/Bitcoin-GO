@@ -6,5 +6,6 @@ import (
 
 func main() {
 	fmt.Printf("UTXO\n")
+	fmt.Printf("UTXO\n")
 
 }

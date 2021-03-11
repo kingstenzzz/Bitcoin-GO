@@ -1,11 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"sync"
 )
 
+type SyncedBuffer struct {
+	lock   sync.Mutex
+	buffer bytes.Buffer
+}
+
 func main() {
-	fmt.Printf("UTXO\n")
-	fmt.Printf("UTXO\n")
+	p := new([10]SyncedBuffer) // type *SyncedBuffer
+	var v SyncedBuffer         // type  SyncedBuffer
+	fmt.Println(p)
+	fmt.Println(v)
 
 }

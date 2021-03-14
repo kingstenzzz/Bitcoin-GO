@@ -1,6 +1,7 @@
 package BLC
 
 import (
+	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
 )
@@ -82,7 +83,7 @@ func CteateBlockChain() *BlockChian {
 	return &BlockChian{DB: db, Tip: latestNlockHash, Blocks: []*Block{fiestBlock}}
 }
 
-//
+//便利区块链
 func ReturnTheChain(bc *BlockChian) {
 	bc.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blockTableName))
@@ -94,7 +95,8 @@ func ReturnTheChain(bc *BlockChian) {
 					break
 				}
 				last_block := Deserialize(blockByte)
-				bc.Blocks = append(bc.Blocks, last_block) //添加到结构体
+				fmt.Println("")
+				//bc.Blocks = append(bc.Blocks, last_block) //添加到结构体
 				blockByte = b.Get(last_block.PreBlockHash)
 			}
 			//数据库出来的数据需要反序列化

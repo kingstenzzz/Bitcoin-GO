@@ -11,6 +11,7 @@ func main() {
 
 	bc.AddBlock([]byte("secend "))
 	bc.AddBlock([]byte("three "))
+
 	//BLC.ReturnTheChain(bc)
 	for _, block := range bc.Blocks {
 		fmt.Printf("Block :%d Hash: %X\n", block.Height, block.Hash)

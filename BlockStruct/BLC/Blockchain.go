@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
+	"math/big"
 )
 
 //数据库名字
@@ -104,4 +105,23 @@ func ReturnTheChain(bc *BlockChian) {
 		return nil
 	})
 
+}
+
+func (bc *BlockChian) PrintChain() {
+	fmt.Println("完整区块信息...")
+	var curBlock *Block
+	bcit := bc.Iterator() //获取迭代对象
+	//var  currentHash = bc.Tip
+	for {
+		fmt.Println("-----")
+		curBlock = bcit.Next()
+		fmt.Printf("\tHash %x \n", curBlock.Hash)
+		fmt.Printf("\tPreBlockHash %x \n", curBlock.PreBlockHash)
+		fmt.Printf("\tdata %x \n", curBlock.data)
+		var hashInt big.Int
+		hashInt.SetBytes(curBlock.PreBlockHash)
+		if big.NewInt(0).Cmp(&hashInt) == 0 {
+			break
+		}
+	}
 }

@@ -14,7 +14,7 @@ type Block struct {
 	PreBlockHash []byte
 	Hash         []byte
 	Height       int64
-	data         []byte
+	Data         []byte
 	Nonce        int64
 }
 
@@ -23,7 +23,7 @@ func NewBlock(height int64, preBlockHash []byte, data []byte) *Block {
 	block.TimeStamp = time.Now().Unix()
 	block.PreBlockHash = preBlockHash
 	block.Height = height
-	block.data = data
+	block.Data = data
 	//HASH是根据当前的参数生成的
 	block.SetHash()
 	pow := NewProofWork(&block)
@@ -41,7 +41,7 @@ func (b *Block) SetHash() {
 		heighyByte,
 		timeStampBytes,
 		b.PreBlockHash,
-		b.data,
+		b.Data,
 	}, []byte{})
 
 	hash := sha256.Sum256(blockByte)

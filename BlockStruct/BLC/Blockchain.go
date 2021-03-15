@@ -25,9 +25,9 @@ func (blc *BlockChian) AddBlock(data []byte) {
 		if b != nil {
 			//获取最新取快递饿hash
 			blockByte := b.Get(blc.Tip)
-			latest_block := Deserialize(blockByte)
 			//数据库出来的数据需要反序列化
-			newBlock := NewBlock(latest_block.Height+1, latest_block.Hash, data)
+			latest_block := Deserialize(blockByte)
+			newBlock := NewBlock(latest_block.Height+1, latest_block.Hash, latest_block.PreBlockHash)
 			//fmt.Printf("写入数据 %s",data)
 			blc.Blocks = append(blc.Blocks, newBlock) //添加到结构体
 			//存入数据库
@@ -115,7 +115,7 @@ func ReturnTheChain(bc *BlockChian) {
 				}
 				last_block := Deserialize(blockByte)
 				fmt.Printf("Height%v \n", last_block.Height)
-				fmt.Printf("%v\n", last_block.data)
+				fmt.Printf("%v\n", last_block.Data)
 				//bc.Blocks = append(bc.Blocks, last_block) //添加到结构体
 				blockByte = b.Get(last_block.PreBlockHash)
 			}
@@ -137,7 +137,7 @@ func (blc *BlockChian) PrintChain() {
 		fmt.Printf("\tHeight %x \n", curBlock.Height)
 		fmt.Printf("\tHash %x \n", curBlock.Hash)
 		fmt.Printf("\tPreBlockHash %x \n", curBlock.PreBlockHash)
-		fmt.Printf("Data: %v \n", curBlock.data)
+		fmt.Printf("Data: %v \n", curBlock.Data)
 		var hashInt big.Int
 		hashInt.SetBytes(curBlock.PreBlockHash)
 		if big.NewInt(0).Cmp(&hashInt) == 0 {

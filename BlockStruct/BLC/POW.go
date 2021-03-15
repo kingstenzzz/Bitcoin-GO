@@ -7,7 +7,7 @@ import (
 	"math/big"
 )
 
-const DiffucltyBits = 16
+const DiffucltyBits = 8
 
 type ProofOfWork struct {
 	Block          *Block

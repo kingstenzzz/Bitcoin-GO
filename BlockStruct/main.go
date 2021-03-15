@@ -1,18 +1,20 @@
 package main
 
-import (
-	"../BlockStruct/BLC"
-)
+import "./BLC"
 
 func main() {
 	//block := BLC.NewBlock(1,nil,[]byte("First Block"))
-	bc := BLC.CteateBlockChain()
+	//bc  := BLC.CteateBlockChain()
+	bc := BLC.ReturnBlockOBJ()
+	bc.AddBlock([]byte("secend"))
+	bc.AddBlock([]byte("three"))
+	BLC.ReturnTheChain(bc)
 
-	bc.AddBlock([]byte("secend "))
-	bc.AddBlock([]byte("three "))
-	bc.PrintChain()
-	//BLC.ReturnTheChain(bc)
-	///for _, block := range bc.Blocks {
+	//for _, block := range bc.Blocks {
 	//fmt.Printf("Block :%d Hash: %X\n", block.Height, block.Hash)
 	//}
+
+	//cli := BLC.CLI{}
+	//cli.Run()
+
 }

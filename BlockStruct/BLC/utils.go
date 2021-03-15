@@ -15,3 +15,8 @@ func IntToHex(data int64) []byte {
 	}
 	return buffer.Bytes()
 }
+
+//Json转切片
+func JSONToSlice() {
+
+}

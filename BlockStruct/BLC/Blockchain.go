@@ -19,7 +19,7 @@ type BlockChian struct {
 }
 
 //添加区块
-func (blc *BlockChian) AddBlock(data []byte) {
+func (blc *BlockChian) AddBlock(txs []*Transaction) {
 	blc.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blockTableName))
 		if b != nil {
@@ -27,7 +27,7 @@ func (blc *BlockChian) AddBlock(data []byte) {
 			blockByte := b.Get(blc.Tip)
 			//数据库出来的数据需要反序列化
 			latest_block := Deserialize(blockByte)
-			newBlock := NewBlock(latest_block.Height+1, latest_block.Hash, latest_block.PreBlockHash)
+			newBlock := NewBlock(latest_block.Height+1, latest_block.Hash, txs)
 			//fmt.Printf("写入数据 %s",data)
 			blc.Blocks = append(blc.Blocks, newBlock) //添加到结构体
 			//存入数据库
@@ -59,7 +59,7 @@ func dbExist() bool {
 
 //创建区块链
 
-func CteateBlockChain() *BlockChian {
+func CteateBlockChain(address string) *BlockChian {
 	//先检测区块链是否已经存在
 	if dbExist() {
 		fmt.Printf("区块链已存在\n")
@@ -81,7 +81,10 @@ func CteateBlockChain() *BlockChian {
 			if err != nil {
 				log.Printf("create bucket [%s]faild %v \n", blockTableName, err)
 			}
-			fiestBlock = CreateGenesisBlock([]byte("GenesisBlock"))
+			txCoinBase := NewCoinbaseTransaction(address)
+
+			fiestBlock = CreateGenesisBlock([]*Transaction{txCoinBase})
+
 			//先发数据序列化后才能够存去数据库
 			err = b.Put(fiestBlock.Hash, fiestBlock.Serialize())
 			if err != nil {
@@ -115,7 +118,7 @@ func ReturnTheChain(bc *BlockChian) {
 				}
 				last_block := Deserialize(blockByte)
 				fmt.Printf("Height%v \n", last_block.Height)
-				fmt.Printf("%v\n", last_block.Data)
+				fmt.Printf("%v\n", last_block.Txs)
 				//bc.Blocks = append(bc.Blocks, last_block) //添加到结构体
 				blockByte = b.Get(last_block.PreBlockHash)
 			}
@@ -134,10 +137,10 @@ func (blc *BlockChian) PrintChain() {
 	for {
 		fmt.Println("-----")
 		curBlock = bcit.Next()
-		fmt.Printf("\tHeight %x \n", curBlock.Height)
+		fmt.Printf("\tHeight %d \n", curBlock.Height)
 		fmt.Printf("\tHash %x \n", curBlock.Hash)
 		fmt.Printf("\tPreBlockHash %x \n", curBlock.PreBlockHash)
-		fmt.Printf("Data: %v \n", curBlock.Data)
+		fmt.Printf("Data: %v \n", curBlock.Txs)
 		var hashInt big.Int
 		hashInt.SetBytes(curBlock.PreBlockHash)
 		if big.NewInt(0).Cmp(&hashInt) == 0 {

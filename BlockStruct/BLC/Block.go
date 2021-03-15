@@ -14,16 +14,16 @@ type Block struct {
 	PreBlockHash []byte
 	Hash         []byte
 	Height       int64
-	Data         []byte
-	Nonce        int64
+	Txs          []*Transaction //交易数据
+	Nonce        int64          //pow生成的哈希变化值
 }
 
-func NewBlock(height int64, preBlockHash []byte, data []byte) *Block {
+func NewBlock(height int64, preBlockHash []byte, txs []*Transaction) *Block {
 	var block Block
 	block.TimeStamp = time.Now().Unix()
 	block.PreBlockHash = preBlockHash
 	block.Height = height
-	block.Data = data
+	block.Txs = txs
 	//HASH是根据当前的参数生成的
 	block.SetHash()
 	pow := NewProofWork(&block)
@@ -41,7 +41,7 @@ func (b *Block) SetHash() {
 		heighyByte,
 		timeStampBytes,
 		b.PreBlockHash,
-		b.Data,
+		b.HashTransaction(),
 	}, []byte{})
 
 	hash := sha256.Sum256(blockByte)
@@ -49,8 +49,8 @@ func (b *Block) SetHash() {
 	//(b.Hash) = sha256.Sum256(nil)
 }
 
-func CreateGenesisBlock(data []byte) *Block {
-	return NewBlock(1, nil, data)
+func CreateGenesisBlock(txs []*Transaction) *Block {
+	return NewBlock(1, nil, txs)
 
 }
 
@@ -73,5 +73,16 @@ func Deserialize(blockBytes []byte) *Block {
 	}
 
 	return &block
+
+}
+
+func (block *Block) HashTransaction() []byte {
+	var txHashes [][]byte
+	for _, tx := range block.Txs {
+		txHashes = append(txHashes, tx.TxHash)
+
+	}
+	txHash := sha256.Sum256(bytes.Join(txHashes, []byte{}))
+	return txHash[:]
 
 }

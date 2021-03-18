@@ -12,8 +12,8 @@ type BlockChainIierator struct {
 }
 
 //实现迭代函数，获取区块
-func (blc *BlockChian) Iterator() *BlockChainIierator {
-	return &BlockChainIierator{DB: blc.DB, currentHash: blc.Tip}
+func (blockchain *BlockChian) Iterator() *BlockChainIierator {
+	return &BlockChainIierator{DB: blockchain.DB, currentHash: blockchain.Tip}
 }
 
 func (bcit *BlockChainIierator) Next() *Block {

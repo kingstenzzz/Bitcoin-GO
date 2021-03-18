@@ -79,7 +79,7 @@ func Deserialize(blockBytes []byte) *Block {
 func (block *Block) HashTransaction() []byte {
 	var txHashes [][]byte
 	for _, tx := range block.Txs {
-		txHashes = append(txHashes, tx.TxHash)
+		txHashes = append(txHashes, tx.TxHash) //把交易添加到UTXO集合
 
 	}
 	txHash := sha256.Sum256(bytes.Join(txHashes, []byte{}))

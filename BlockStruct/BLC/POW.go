@@ -33,6 +33,8 @@ func (proofOfWork *ProofOfWork) Run() ([]byte, int) {
 		hash = tmp[:]
 		hashInt.SetBytes(hash)
 		if proofOfWork.target.Cmp(&hashInt) == 1 {
+			fmt.Printf("target%b \n", proofOfWork.target)
+
 			break
 		}
 		nonce++

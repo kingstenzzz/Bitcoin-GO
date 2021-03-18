@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strconv"
 )
 
 //数据库名字
@@ -19,17 +20,17 @@ type BlockChian struct {
 }
 
 //添加区块
-func (blc *BlockChian) AddBlock(txs []*Transaction) {
-	blc.DB.Update(func(tx *bolt.Tx) error {
+func (blockchain *BlockChian) AddBlock(txs []*Transaction) {
+	blockchain.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blockTableName))
 		if b != nil {
 			//获取最新取快递饿hash
-			blockByte := b.Get(blc.Tip)
+			blockByte := b.Get(blockchain.Tip)
 			//数据库出来的数据需要反序列化
 			latest_block := Deserialize(blockByte)
 			newBlock := NewBlock(latest_block.Height+1, latest_block.Hash, txs)
 			//fmt.Printf("写入数据 %s",data)
-			blc.Blocks = append(blc.Blocks, newBlock) //添加到结构体
+			blockchain.Blocks = append(blockchain.Blocks, newBlock) //添加到结构体
 			//存入数据库
 			err := b.Put(newBlock.Hash, newBlock.Serialize())
 			if err != nil {
@@ -40,7 +41,7 @@ func (blc *BlockChian) AddBlock(txs []*Transaction) {
 			if err != nil {
 				log.Printf("update the latest block to db faild %v", err)
 			}
-			blc.Tip = newBlock.Hash
+			blockchain.Tip = newBlock.Hash
 		}
 		return nil
 
@@ -129,18 +130,31 @@ func ReturnTheChain(bc *BlockChian) {
 
 }
 
-func (blc *BlockChian) PrintChain() {
+func (blockchain *BlockChian) PrintChain() {
 	fmt.Println("完整区块信息...")
 	var curBlock *Block
-	bcit := blc.Iterator() //获取迭代对象
+	bcit := blockchain.Iterator() //获取迭代对象
 	//var  currentHash = bc.Tip
 	for {
 		fmt.Println("-----")
 		curBlock = bcit.Next()
-		fmt.Printf("\tHeight %d \n", curBlock.Height)
-		fmt.Printf("\tHash %x \n", curBlock.Hash)
-		fmt.Printf("\tPreBlockHash %x \n", curBlock.PreBlockHash)
-		fmt.Printf("Data: %v \n", curBlock.Txs)
+		fmt.Printf("\tHeight: %d \n", curBlock.Height)
+		fmt.Printf("\tHash: %x \n", curBlock.Hash)
+		fmt.Printf("\tPreBlockHash :%x \n", curBlock.PreBlockHash)
+		for _, tx := range curBlock.Txs {
+			fmt.Printf("\ttxHash: %x \n", tx.TxHash)
+			for _, vin := range tx.Vins {
+				fmt.Printf("\tvin- Hash: %x \n", vin.TxHash)
+				fmt.Printf("\tvin -OUT: %d \n", vin.Vout)
+				fmt.Printf("\tvin -Sig: %s \n", vin.ScriptSig)
+			}
+			for _, vout := range tx.Vouts {
+				fmt.Printf("\tout- value: %d \n", vout.Value)
+				fmt.Printf("\tout - ScriptPubkey:%s \n", vout.ScriptPubkey)
+
+			}
+
+		}
 		var hashInt big.Int
 		hashInt.SetBytes(curBlock.PreBlockHash)
 		if big.NewInt(0).Cmp(&hashInt) == 0 {
@@ -170,5 +184,49 @@ func ReturnBlockOBJ() *BlockChian {
 		log.Println("查找区块链失败")
 	}
 	return &BlockChian{DB: db, Tip: tip}
+
+}
+
+//挖矿功能
+func (blockchain *BlockChian) MineNewBlock(from, to, amount []string) {
+	var txs []*Transaction
+	var block *Block
+	//生成交易
+	for index, address := range from {
+		value, _ := strconv.Atoi(amount[index])
+		tx := NewSimpleTransaction(address, to[index], value)
+		txs = append(txs, tx)
+
+	}
+	blockchain.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			hash := b.Get([]byte("1"))
+			blockByte := b.Get(hash)
+			block = Deserialize(blockByte)
+
+		}
+		return nil
+	})
+	//生成最新区块
+	block = NewBlock(block.Height+1, block.Hash, txs)
+	//新区块添加到数据库
+	blockchain.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			err := b.Put(block.Hash, block.Serialize())
+			if nil != err {
+				log.Printf("update the new block to DB failed %v\n", err)
+			}
+			err = b.Put([]byte("1"), block.Hash)
+			if err != nil {
+				log.Printf("update the latest hash to the DB failed %v \n", err)
+			}
+			blockchain.Tip = block.Hash
+
+		}
+		return nil
+
+	})
 
 }

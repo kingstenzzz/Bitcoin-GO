@@ -40,11 +40,14 @@ func (cli *CLI) printChain() {
 
 }
 
-func (cli *CLI) sendCoinTo() {
+func (cli *CLI) sendCoinTo(from, to, amount []string) {
 	if !dbExist() {
 		fmt.Println("数据库不存在")
 		os.Exit(1)
 	}
+	blockhcain := ReturnBlockOBJ()
+	defer blockhcain.DB.Close()
+	blockhcain.MineNewBlock(from, to, amount)
 
 }
 
@@ -69,9 +72,9 @@ func (cli *CLI) Run() {
 	flagAddBlock := addBlockCmd.String("data", "send 100 btc to xxx", " 区块数据") //参数
 	flagCreateBlockchain := addBlockCmd.String("address", "kingsten", " 矿工地址") //参数
 	//发起交易
-	flagSendFromArg := sendCoinCmd.String("from", "", " 源地址")     //参数
-	flagSendToArg := sendCoinCmd.String("to", "", " 接收地址")        //参数
-	flagSendAmountArg := sendCoinCmd.String("ammount", "", " 数量") //参数
+	flagSendFromArg := sendCoinCmd.String("from", "", " 源地址")    //参数
+	flagSendToArg := sendCoinCmd.String("to", "", " 接收地址")       //参数
+	flagSendAmountArg := sendCoinCmd.String("amount", "", " 数量") //参数
 
 	fmt.Println(os.Args)
 
@@ -139,10 +142,10 @@ func (cli *CLI) Run() {
 			fmt.Println("数量")
 			os.Exit(1)
 		}
-		fmt.Println(*flagSendFromArg)
-		fmt.Println(*flagSendToArg)
-		fmt.Println(*flagSendAmountArg)
-		cli.sendCoinTo()
+		fmt.Printf("From %s", JSONToSlice(*flagSendFromArg))
+		fmt.Printf("to %s", JSONToSlice(*flagSendToArg))
+		fmt.Printf("amount %s", JSONToSlice(*flagSendAmountArg))
+		cli.sendCoinTo(JSONToSlice(*flagSendFromArg), JSONToSlice(*flagSendToArg), JSONToSlice(*flagSendAmountArg))
 	}
 
 }

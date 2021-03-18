@@ -3,6 +3,7 @@ package BLC
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"log"
 )
 
@@ -17,6 +18,11 @@ func IntToHex(data int64) []byte {
 }
 
 //Json转切片
-func JSONToSlice() {
-
+// "[\"k\"]" -to "[\"k,a\"]" -amount "[\"100\"]"
+func JSONToSlice(jsonString string) []string {
+	var strSlice []string
+	if err := json.Unmarshal([]byte(jsonString), &strSlice); nil != err {
+		log.Panicf("json to string faild %d \v", err)
+	}
+	return strSlice
 }

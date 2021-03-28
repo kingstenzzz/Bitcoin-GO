@@ -26,6 +26,7 @@ func NewCoinbaseTransaction(address string) *Transaction {
 //生成交易哈希
 func (tx *Transaction) HashTransaction() {
 	var result bytes.Buffer
+
 	encoder := gob.NewEncoder(&result)
 	if err := encoder.Encode(tx); err != nil {
 		log.Printf("tx HASH encode failed %v \n", err)
@@ -39,11 +40,16 @@ func NewSimpleTransaction(from string, to string, ammount int) *Transaction {
 	var txOutputs []*TxOutput
 	//blockchian := ReturnBlockOBJ()
 
-	txInput := &TxInput{}
+	txInput := &TxInput{Vout: 0, TxHash: []byte("0072a43a150fdd23555411ff45301c453c1e51c4383786b6d117b857b4cee4c3"), ScriptSig: from}
 
 	txInputs = append(txInputs, txInput)
-	txOutput := &TxOutput{}
+	txOutput := &TxOutput{Value: ammount, ScriptPubkey: to}
 	txOutputs = append(txOutputs, txOutput)
+	//找零
+	if ammount < 10 {
+		txOutput = &TxOutput{10 - ammount, from}
+		txOutputs = append(txOutputs, txOutput)
+	}
 	tx := Transaction{Vins: txInputs, Vouts: txOutputs, TxHash: nil}
 	tx.HashTransaction()
 	return &tx

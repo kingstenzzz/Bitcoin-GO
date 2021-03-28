@@ -7,3 +7,8 @@ type TxOutput struct {
 	Value        int
 	ScriptPubkey string
 }
+
+func (txOutout *TxOutput) CheckPubkeyWithAdress(adress string) bool {
+	return adress == txOutout.ScriptPubkey
+
+}

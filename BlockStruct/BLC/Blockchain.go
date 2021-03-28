@@ -1,6 +1,7 @@
 package BLC
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/boltdb/bolt"
 	"log"
@@ -21,6 +22,7 @@ type BlockChian struct {
 
 //添加区块
 func (blockchain *BlockChian) AddBlock(txs []*Transaction) {
+
 	blockchain.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blockTableName))
 		if b != nil {
@@ -127,7 +129,6 @@ func ReturnTheChain(bc *BlockChian) {
 		}
 		return nil
 	})
-
 }
 
 func (blockchain *BlockChian) PrintChain() {
@@ -228,5 +229,86 @@ func (blockchain *BlockChian) MineNewBlock(from, to, amount []string) {
 		return nil
 
 	})
+
+}
+
+/*
+遍历查找区块链数据库中的每一个区块中的每一个
+1属于传入地址
+2属于未被花费交易
+ 1.遍历数据库，把所有得output存入缓存
+ 2.再次遍历区块链数据库，检查每一个vout是否包含前面得已花费缓存中
+*/
+//返回所有的输出
+func (blockchian *BlockChian) UnUTXOS(address string) *TxOutput {
+	//遍历数据库
+	bcit := blockchian.Iterator()
+	//获取所有已花费输出
+	//
+	var unUTXOS []*TxOutput
+	spentTxutputs := blockchian.SpentOutputs(address)
+	for {
+		block := bcit.Next()
+		for _, tx := range block.Txs {
+			for index, vout := range tx.Vouts {
+				//交易索引位置
+				//vout引入地址
+				if vout.CheckPubkeyWithAdress(address) {
+					if len(spentTxutputs) != 0 {
+						for txHash, indexArray := range spentTxutputs {
+							//txHash :当前输出所引用得交易哈希
+							//indexArray :哈希关联得vout索引列表
+							for _, i := range indexArray {
+								if txHash == hex.EncodeToString(tx.TxHash) && index == i {
+									continue
+									//index ==i 说明正好是当前得输出被其他交易引用
+
+									//
+								}
+
+							}
+
+						}
+
+					} else {
+						unUTXOS = append(unUTXOS, vout)
+
+					}
+
+				}
+
+			}
+		}
+	}
+	return nil
+
+}
+
+//	//获取所有已花费输出
+func (blockchian *BlockChian) SpentOutputs(address string) map[string][]int {
+	//已花费输出缓存
+	spentTXOutputs := make(map[string][]int)
+	bcit := blockchian.Iterator()
+	for {
+		block := bcit.Next()
+		for _, tx := range block.Txs {
+			for _, in := range tx.Vins {
+				if in.CheckPubkeyWithAddress(address) {
+					key := hex.EncodeToString(in.TxHash)
+					spentTXOutputs[key] = append(spentTXOutputs[key], in.Vout)
+				}
+
+			}
+
+		}
+		var hashInt big.Int
+		hashInt.SetBytes(block.PreBlockHash)
+		if hashInt.Cmp(big.NewInt(0)) == 0 {
+			break
+		}
+
+	}
+
+	return spentTXOutputs
 
 }

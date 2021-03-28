@@ -17,6 +17,8 @@ func PrintUsage() {
 	fmt.Println("addblock -data DA--添加区块")
 	fmt.Println("printchain --输出区块链信息")
 	fmt.Println("-from From -to TO -amount AMOUNT--发起转账")
+	//查询余额
+	fmt.Println("getbalance -address From --查询指定地址余额")
 
 }
 func (cli *CLI) createBlockChain(address string) {
@@ -51,6 +53,17 @@ func (cli *CLI) sendCoinTo(from, to, amount []string) {
 
 }
 
+//查询指定地址得UTXO
+func (cli *CLI) getBalance(from string) {
+	if !dbExist() {
+		fmt.Println("数据库不存在")
+		os.Exit(1)
+	}
+	blockchain := ReturnBlockOBJ()
+	blockchain.UnUTXOS(from)
+
+}
+
 func IsValidArgs() {
 	if len(os.Args) <= 1 {
 		fmt.Printf(os.Args[1])
@@ -69,12 +82,17 @@ func (cli *CLI) Run() {
 	printChainCmd := flag.NewFlagSet("printchain", flag.ContinueOnError)
 	createBlockChianCmd := flag.NewFlagSet("createblockchain -address address", flag.ContinueOnError)
 	sendCoinCmd := flag.NewFlagSet("send -from address -to  adress", flag.ContinueOnError)
+	getBalanceCmd := flag.NewFlagSet("getBalance -from address", flag.ContinueOnError)
+	///
 	flagAddBlock := addBlockCmd.String("data", "send 100 btc to xxx", " 区块数据") //参数
 	flagCreateBlockchain := addBlockCmd.String("address", "kingsten", " 矿工地址") //参数
 	//发起交易
 	flagSendFromArg := sendCoinCmd.String("from", "", " 源地址")    //参数
 	flagSendToArg := sendCoinCmd.String("to", "", " 接收地址")       //参数
 	flagSendAmountArg := sendCoinCmd.String("amount", "", " 数量") //参数
+	//查询余额
+
+	flagGetBalanceArg := getBalanceCmd.String("from", "", " 源地址") //参数
 
 	fmt.Println(os.Args)
 
@@ -103,7 +121,11 @@ func (cli *CLI) Run() {
 		if err := sendCoinCmd.Parse(os.Args[2:]); nil != err {
 			log.Panicf("send coin faild %v \n", err)
 		}
-
+	case "getbalance":
+		fmt.Println("get Balace")
+		if err := getBalanceCmd.Parse(os.Args[2:]); nil != err {
+			log.Panicf("get balance faild %v \n", err)
+		}
 	default:
 		log.Printf("parse  faild  \n")
 
@@ -116,7 +138,6 @@ func (cli *CLI) Run() {
 		blockchain := ReturnBlockOBJ()
 		fmt.Printf(*flagAddBlock)
 		blockchain.AddBlock([]*Transaction{}) /////
-		//cli.addBlock(*flagAddBlock)
 	}
 	if printChainCmd.Parsed() {
 		blockchain := ReturnBlockOBJ()
@@ -129,6 +150,14 @@ func (cli *CLI) Run() {
 		}
 		cli.createBlockChain(*flagCreateBlockchain)
 	}
+	if getBalanceCmd.Parsed() {
+		if *flagGetBalanceArg == "" {
+			PrintUsage()
+			os.Exit(1)
+		}
+		cli.getBalance(*flagGetBalanceArg)
+	}
+
 	if sendCoinCmd.Parsed() {
 		if *flagSendFromArg == "" {
 			fmt.Println("源地址不能空")
@@ -142,6 +171,7 @@ func (cli *CLI) Run() {
 			fmt.Println("数量")
 			os.Exit(1)
 		}
+
 		fmt.Printf("From %s", JSONToSlice(*flagSendFromArg))
 		fmt.Printf("to %s", JSONToSlice(*flagSendToArg))
 		fmt.Printf("amount %s", JSONToSlice(*flagSendAmountArg))

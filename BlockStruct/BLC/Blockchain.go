@@ -195,7 +195,7 @@ func (blockchain *BlockChian) MineNewBlock(from, to, amount []string) {
 	//生成交易
 	for index, address := range from {
 		value, _ := strconv.Atoi(amount[index])
-		tx := NewSimpleTransaction(address, to[index], value)
+		tx := NewSimpleTransaction(address, to[index], value, blockchain)
 		txs = append(txs, tx)
 
 	}
@@ -240,38 +240,62 @@ func (blockchain *BlockChian) MineNewBlock(from, to, amount []string) {
  2.再次遍历区块链数据库，检查每一个vout是否包含前面得已花费缓存中
 */
 //返回所有的输出
-func (blockchian *BlockChian) UnUTXOS(address string) *TxOutput {
+func (blockchian *BlockChian) UnUTXOS(address string) []*UTXO {
 	//遍历数据库
 	bcit := blockchian.Iterator()
 	//获取所有已花费输出
-	//
-	var unUTXOS []*TxOutput
-	spentTxutputs := blockchian.SpentOutputs(address)
+	var unUTXOS []*UTXO
+	spentTxOutputs := blockchian.SpentOutputs(address)
 	for {
 		block := bcit.Next()
+		//获取每个区块得交易
 		for _, tx := range block.Txs {
+
+		work:
 			for index, vout := range tx.Vouts {
 				//交易索引位置
-				//vout引入地址
-				if vout.CheckPubkeyWithAdress(address) {
-					if len(spentTxutputs) != 0 {
-						for txHash, indexArray := range spentTxutputs {
+				//vout当前输出
+
+				if vout.CheckPubkeyWithAdress(address) { //接收是这个地址的输出
+					if len(spentTxOutputs) != 0 {
+						var isSpentOutput bool
+						for txHash, indexArray := range spentTxOutputs {
 							//txHash :当前输出所引用得交易哈希
 							//indexArray :哈希关联得vout索引列表
 							for _, i := range indexArray {
+								//这个
 								if txHash == hex.EncodeToString(tx.TxHash) && index == i {
-									continue
+									//说明当前交易tx至少已经有输出被其他交易得输入引用
+									//index==i 正好是当先输出被其他交易引用
+									isSpentOutput = true
+									continue work //跳转到最外层循环
 									//index ==i 说明正好是当前得输出被其他交易引用
-
-									//
 								}
 
 							}
 
 						}
+						/*
+							type UTXO struct {
+								//UTXO
+								TxHash	[]byte
+								//UTXO在其所属交易得输出列表中的索引
+								Index	int
+								//Output
+								Output	*TxOutput
+							}
+
+						*/
+						//没有被花
+						if !isSpentOutput == false {
+							utxo := &UTXO{TxHash: tx.TxHash, Index: index, Output: vout}
+							unUTXOS = append(unUTXOS, utxo)
+						}
 
 					} else {
-						unUTXOS = append(unUTXOS, vout)
+						utxo := &UTXO{TxHash: tx.TxHash, Index: index, Output: vout}
+
+						unUTXOS = append(unUTXOS, utxo)
 
 					}
 
@@ -279,8 +303,14 @@ func (blockchian *BlockChian) UnUTXOS(address string) *TxOutput {
 
 			}
 		}
+
+		var hashInt big.Int
+		hashInt.SetBytes(block.PreBlockHash)
+		if hashInt.Cmp(big.NewInt(0)) == 0 {
+			break
+		}
 	}
-	return nil
+	return unUTXOS
 
 }
 
@@ -292,12 +322,15 @@ func (blockchian *BlockChian) SpentOutputs(address string) map[string][]int {
 	for {
 		block := bcit.Next()
 		for _, tx := range block.Txs {
-			for _, in := range tx.Vins {
-				if in.CheckPubkeyWithAddress(address) {
-					key := hex.EncodeToString(in.TxHash)
-					spentTXOutputs[key] = append(spentTXOutputs[key], in.Vout)
-				}
+			//排出coinbase交易
+			if !tx.isCoinbaseTransaction() {
+				for _, in := range tx.Vins {
+					if in.CheckPubkeyWithAddress(address) {
+						key := hex.EncodeToString(in.TxHash)
+						spentTXOutputs[key] = append(spentTXOutputs[key], in.Vout)
+					}
 
+				}
 			}
 
 		}
@@ -310,5 +343,37 @@ func (blockchian *BlockChian) SpentOutputs(address string) map[string][]int {
 	}
 
 	return spentTXOutputs
+
+}
+
+func (blockchain *BlockChian) getBalance(address string) int {
+	var amount int
+	utxos := blockchain.UnUTXOS(address)
+	for _, utxo := range utxos {
+		amount += utxo.Output.Value
+	}
+	return amount
+}
+
+//查找指定地址得可用UTXO
+func (blockchain *BlockChian) FindSpendableUTXO(from string, amount int) (int, map[string][]int) {
+	spendableUTXO := make(map[string][]int)
+	var value int
+	utxos := blockchain.UnUTXOS(from)
+	//遍历UTXO
+	for _, utxo := range utxos {
+		value += utxo.Output.Value
+		hash := hex.EncodeToString(utxo.TxHash)
+		spendableUTXO[hash] = append(spendableUTXO[hash], utxo.Index)
+
+		if value >= amount {
+			break
+		}
+	}
+	//所有的遍历完成
+	if value < amount {
+		fmt.Printf("地址[%s]余额不足，当前余额[d]，转账[余额]", from, value, amount)
+	}
+	return value, spendableUTXO
 
 }

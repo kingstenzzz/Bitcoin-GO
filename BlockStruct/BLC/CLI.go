@@ -21,9 +21,6 @@ func PrintUsage() {
 	fmt.Println("getbalance -address From --查询指定地址余额")
 
 }
-func (cli *CLI) createBlockChain(address string) {
-	CteateBlockChain(address)
-}
 
 func (cli *CLI) addBlock(txs []*Transaction) {
 	if !dbExist() {
@@ -32,36 +29,6 @@ func (cli *CLI) addBlock(txs []*Transaction) {
 
 	}
 	cli.BC.AddBlock(txs)
-}
-func (cli *CLI) printChain() {
-	if !dbExist() {
-		fmt.Println("数据库不存在")
-		os.Exit(1)
-	}
-	cli.BC.PrintChain()
-
-}
-
-func (cli *CLI) sendCoinTo(from, to, amount []string) {
-	if !dbExist() {
-		fmt.Println("数据库不存在")
-		os.Exit(1)
-	}
-	blockhcain := ReturnBlockOBJ()
-	defer blockhcain.DB.Close()
-	blockhcain.MineNewBlock(from, to, amount)
-
-}
-
-//查询指定地址得UTXO
-func (cli *CLI) getBalance(from string) {
-	if !dbExist() {
-		fmt.Println("数据库不存在")
-		os.Exit(1)
-	}
-	blockchain := ReturnBlockOBJ()
-	blockchain.UnUTXOS(from)
-
 }
 
 func IsValidArgs() {
@@ -84,8 +51,8 @@ func (cli *CLI) Run() {
 	sendCoinCmd := flag.NewFlagSet("send -from address -to  adress", flag.ContinueOnError)
 	getBalanceCmd := flag.NewFlagSet("getBalance -from address", flag.ContinueOnError)
 	///
-	flagAddBlock := addBlockCmd.String("data", "send 100 btc to xxx", " 区块数据") //参数
-	flagCreateBlockchain := addBlockCmd.String("address", "kingsten", " 矿工地址") //参数
+	flagAddBlock := addBlockCmd.String("data", "send 100 btc to xxx", " 区块数据")         //参数
+	flagCreateBlockchain := createBlockChianCmd.String("address", "kingsten", " 矿工地址") //参数
 	//发起交易
 	flagSendFromArg := sendCoinCmd.String("from", "", " 源地址")    //参数
 	flagSendToArg := sendCoinCmd.String("to", "", " 接收地址")       //参数

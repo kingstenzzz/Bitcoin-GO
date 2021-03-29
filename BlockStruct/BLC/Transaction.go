@@ -2,7 +2,10 @@ package BLC
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
+	"fmt"
 	"log"
 )
 
@@ -26,32 +29,55 @@ func NewCoinbaseTransaction(address string) *Transaction {
 //生成交易哈希
 func (tx *Transaction) HashTransaction() {
 	var result bytes.Buffer
-
 	encoder := gob.NewEncoder(&result)
 	if err := encoder.Encode(tx); err != nil {
 		log.Printf("tx HASH encode failed %v \n", err)
 	}
+	hash := sha256.Sum256(result.Bytes())
+	tx.TxHash = hash[:]
 
 }
 
 //生成普通转账
-func NewSimpleTransaction(from string, to string, ammount int) *Transaction {
+func NewSimpleTransaction(from string, to string, amount int, bc *BlockChian) *Transaction {
 	var txInputs []*TxInput
 	var txOutputs []*TxOutput
 	//blockchian := ReturnBlockOBJ()
+	money, spendableUTXOic := bc.FindSpendableUTXO(from, amount)
+	fmt.Printf("momey %v", money)
+	//输入
+	for txHash, indexArray := range spendableUTXOic {
+		txHashBytes, err := hex.DecodeString(txHash)
+		if err != nil {
+			fmt.Printf("deconde spendable string to byte faild%v", err)
+		}
+		for _, index := range indexArray {
+			txInput := &TxInput{TxHash: txHashBytes, Vout: index, ScriptSig: from}
+			txInputs = append(txInputs, txInput)
+		}
 
-	txInput := &TxInput{Vout: 0, TxHash: []byte("0072a43a150fdd23555411ff45301c453c1e51c4383786b6d117b857b4cee4c3"), ScriptSig: from}
+	}
 
-	txInputs = append(txInputs, txInput)
-	txOutput := &TxOutput{Value: ammount, ScriptPubkey: to}
+	txOutput := &TxOutput{Value: amount, ScriptPubkey: to}
 	txOutputs = append(txOutputs, txOutput)
 	//找零
-	if ammount < 10 {
-		txOutput = &TxOutput{10 - ammount, from}
+	if money > amount {
+		txOutput = &TxOutput{money - amount, from}
 		txOutputs = append(txOutputs, txOutput)
+
+	} else {
+		fmt.Printf("余额不足..")
+
 	}
+
 	tx := Transaction{Vins: txInputs, Vouts: txOutputs, TxHash: nil}
 	tx.HashTransaction()
 	return &tx
+
+}
+
+//判断是否coinbase交易
+func (tx *Transaction) isCoinbaseTransaction() bool {
+	return tx.Vins[0].Vout == -1 && len(tx.Vins[0].TxHash) == 0
 
 }

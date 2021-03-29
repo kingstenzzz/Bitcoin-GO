@@ -287,7 +287,7 @@ func (blockchian *BlockChian) UnUTXOS(address string) []*UTXO {
 
 						*/
 						//没有被花
-						if !isSpentOutput == false {
+						if isSpentOutput == false {
 							utxo := &UTXO{TxHash: tx.TxHash, Index: index, Output: vout}
 							unUTXOS = append(unUTXOS, utxo)
 						}
@@ -322,7 +322,7 @@ func (blockchian *BlockChian) SpentOutputs(address string) map[string][]int {
 	for {
 		block := bcit.Next()
 		for _, tx := range block.Txs {
-			//排出coinbase交易
+			//排除coinbase交易
 			if !tx.isCoinbaseTransaction() {
 				for _, in := range tx.Vins {
 					if in.CheckPubkeyWithAddress(address) {
@@ -365,7 +365,6 @@ func (blockchain *BlockChian) FindSpendableUTXO(from string, amount int) (int, m
 		value += utxo.Output.Value
 		hash := hex.EncodeToString(utxo.TxHash)
 		spendableUTXO[hash] = append(spendableUTXO[hash], utxo.Index)
-
 		if value >= amount {
 			break
 		}

@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e92ca44a-33d5-43a5-b7f3-d50f6f45c42d" name="Default Changelist" comment="余额查询" />
+    <list default="true" id="e92ca44a-33d5-43a5-b7f3-d50f6f45c42d" name="Default Changelist" comment="修复余额查询为0">
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2021_3_24_12_24_[Default_Changelist]1/main.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2021_3_24_12_24_[Default_Changelist]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -82,8 +86,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Build.go build BlockStruct/" />
       <item itemvalue="Go Build.go build blockchain" />
+      <item itemvalue="Go Build.go build BlockStruct/" />
       <item itemvalue="Go Build.go build main.go" />
     </list>
     <recent_temporary>
@@ -125,7 +129,8 @@
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="交易验证" />
     <MESSAGE value="余额查询" />
-    <option name="LAST_COMMIT_MESSAGE" value="余额查询" />
+    <MESSAGE value="修复余额查询为0" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复余额查询为0" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
